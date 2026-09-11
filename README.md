@@ -4,7 +4,7 @@
 **AI Business Analyst** — Team 4, Final Team Project (AI & Automation Engineering)
 
 - Mohamed Mahmoud Fathy — Built the agentic workflow from model chatting to handling tool calls in addition to Gradio UI and making charts
-- Ahmed Elsayed Amer — Built the five main tools the model will use while handling analysis request in addition to providing data for testing process
+- Ahmed Yasser Amer — Built the five main tools the model will use while handling analysis request in addition to providing data for testing process
 
 ## Problem Statement
 Small businesses and start-ups often have sales data sitting in spreadsheets but no easy way to interrogate it — answering a question like "how did last quarter perform?" usually means opening the file, filtering rows, and building a pivot table by hand. This project removes that friction: the user uploads a CSV of their sales data and asks questions about it in plain language. The application performs the actual calculations in Python (never trusting the LLM to do arithmetic) and uses an LLM to decide which analysis to run and to explain the result in a clear, natural-language answer.
