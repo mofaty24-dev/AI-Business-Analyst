@@ -104,12 +104,14 @@ The model selects which tool(s) to call based on the user's question; it never p
 
 ## Known Limitations
 - **Model substitution**: uses an OpenRouter free model instead of a locally-hosted Ollama model, which is a deviation from the brief's stated requirement.
+- **Advanced topic not implemented**: the assigned advanced feature (AI-driven multi-step analysis / automatic business report) was intentionally out of scope for this submission.
 - Chart interpretation depends on the uploaded CSV having a `date` column plus either a `revenue` column or both `quantity` and `price` — datasets with substantially different structures may need column mapping adjustments.
 - `get_customer_statistics` returns a different set of fields depending on whether a specific `customer_id` is requested versus an aggregate view.
 - No automated test suite; validation has been manual.
 
 ## Future Improvements
 - Add the option to run against a genuinely local Ollama model as a fallback/comparison to the current OpenRouter setup.
+- Implement the assigned advanced topic (AI-driven multi-step business report).
 - Expand chart options (e.g. top-products chart, customer-spend distribution).
 - Add caching for repeated identical tool calls to reduce redundant computation on large datasets.
 - Add a lightweight automated test suite covering each tool with edge-case CSVs (missing columns, empty file, malformed dates).
