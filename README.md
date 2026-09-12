@@ -3,7 +3,7 @@
 ## Project Name and Team Members
 **AI Business Analyst** — Team 4, Final Team Project (AI & Automation Engineering)
 
-- Mohamed Mahmoud Fathy — Built the agentic workflow from model chatting to handling tool calls in addition to Gradio UI and making charts
+- Mohamed Mahmoud Fathy — Built the agentic workflow from model chatting to handling tool calls in addition to Gradio UI , making charts and the bonus report
 - Ahmed Yasser Amer — Built the five main tools the model will use while handling analysis request in addition to providing data for testing process
 
 ## Problem Statement
@@ -15,6 +15,7 @@ Small businesses and start-ups often have sales data sitting in spreadsheets but
 - The assistant automatically selects and calls the right analysis tool(s) based on the question — including chaining more than one tool when a question needs it (e.g. comparing periods and then explaining which products drove the change).
 - On-demand monthly revenue chart, shown only when requested via a dedicated button (not auto-generated on upload).
 - On-demand period-comparison chart, comparing revenue between two user-chosen date ranges.
+- **"Analyze My Business" report** — a one-click, multi-step analysis that runs all 5 tools in sequence and produces a written business insight report with trends, product/customer highlights, and evidence-based recommendations.
 - Input validation on the uploaded CSV, with clear error messages instead of a crash.
 - Graceful "I don't have enough information" behavior when a question can't be answered from the uploaded data or before any data has been uploaded.
 
@@ -41,8 +42,8 @@ To run the model integration:
 ## Installation / Setup Instructions
 1. Clone the repository:
    ```
-   git clone https://github.com/mofaty24-dev/AI-Business-Analyst/tree/main
-   cd main
+   git clone <repo-url>
+   cd <repo-folder>
    ```
 2. Install dependencies:
    ```
@@ -67,6 +68,17 @@ User
         ← tool result (JSON)
       ← final natural-language response
     ← chat reply + on-demand chart (Matplotlib, via Gradio_UI.py only)
+
+Advanced topic — "Analyze My Business" (separate path, not part of the chat loop):
+User clicks "Analyze My Business"
+  → Gradio_UI.py
+    → run_full_business_analysis() in Agentic_AI.py
+      → calls all 5 Tools.py functions in a fixed sequence (revenue, monthly sales,
+        top/bottom products, customer stats, latest-period comparison)
+      → bundles all results into one JSON "facts" object
+      → single OpenRouter call: model interprets the facts and writes the report
+        (explicitly instructed not to invent or recalculate any numbers)
+    ← rendered business insight report
 ```
 
 Key design points:
@@ -74,6 +86,7 @@ Key design points:
 - **Tools return data, never charts.** Charts are built independently in `Gradio_UI.py` from the same underlying data a tool would return, and are only rendered when the user explicitly requests them (not automatically on upload).
 - **Per-session state**: the uploaded DataFrame is held in Gradio's session state, not a global variable, so one user's data never leaks into another session.
 - **No LangChain or agent framework** — tool calling uses the OpenAI-compatible `tools=` parameter directly, with a simple `while` loop handling sequential (multi-step) tool calls.
+- **The advanced-topic path is deliberately not routed through the model's tool-selection loop.** The 5-step sequence is fixed by the brief's own example workflow, so `run_full_business_analysis()` calls the 5 functions directly in Python and only involves the model once, at the end, purely to interpret and write about numbers it did not calculate.
 
 ## Tools
 | Tool | What it does |
@@ -100,18 +113,32 @@ The model selects which tool(s) to call based on the user's question; it never p
 > 3. Assistant combines both results into a single natural-language answer.
 
 ## Explanation of the Advanced Topic
-[This project's assigned advanced topic — AI-driven multi-step analysis (an automatic "Analyze My Business" report combining several analyses into one insight report) — was not implemented in this submission, by team decision, in favor of ensuring the core and intermediate requirements were solid. See Known Limitations.]
+This project's assigned advanced topic is **AI-driven multi-step analysis**, implemented as the **"Analyze My Business"** feature.
+
+Rather than answering one isolated question, this feature runs a fixed sequence of analyses without waiting for the user to ask for each one:
+1. Total revenue
+2. Monthly sales trend
+3. Top and bottom products
+4. Customer behavior statistics
+5. A comparison between the two most recent months, to identify what changed and why
+
+All five steps are plain Python calls into the existing `Tools.py` functions — no new analysis logic was written, only an orchestration function (`run_full_business_analysis()` in `Agentic_AI.py`) that calls them in sequence and bundles the results.
+
+Those results are then passed, as a single JSON object, to the model in one final call, with an explicit instruction not to invent or recalculate any numbers — its only job is to interpret the pre-calculated facts and write a structured report: an executive summary, trends, product and customer highlights, an explanation of the most recent change, and evidence-based recommendations that cite the actual numbers provided.
+
+This keeps the brief's core rule intact even for the advanced feature: **Python calculates, the model interprets.**
 
 ## Known Limitations
 - **Model substitution**: uses an OpenRouter free model instead of a locally-hosted Ollama model, which is a deviation from the brief's stated requirement.
-- **Advanced topic not implemented**: the assigned advanced feature (AI-driven multi-step analysis / automatic business report) was intentionally out of scope for this submission.
+- **"Analyze My Business" always compares the two most recent months only** — it doesn't let the user choose which periods go into the automatic comparison (the manual "Compare periods" feature still supports arbitrary date ranges).
+- If the dataset spans fewer than two months, the automatic period comparison step is skipped and noted as unavailable in the report rather than causing an error.
 - Chart interpretation depends on the uploaded CSV having a `date` column plus either a `revenue` column or both `quantity` and `price` — datasets with substantially different structures may need column mapping adjustments.
 - `get_customer_statistics` returns a different set of fields depending on whether a specific `customer_id` is requested versus an aggregate view.
 - No automated test suite; validation has been manual.
 
 ## Future Improvements
+- Let the user choose which periods "Analyze My Business" compares, instead of always defaulting to the two most recent months.
 - Add the option to run against a genuinely local Ollama model as a fallback/comparison to the current OpenRouter setup.
-- Implement the assigned advanced topic (AI-driven multi-step business report).
 - Expand chart options (e.g. top-products chart, customer-spend distribution).
 - Add caching for repeated identical tool calls to reduce redundant computation on large datasets.
 - Add a lightweight automated test suite covering each tool with edge-case CSVs (missing columns, empty file, malformed dates).
